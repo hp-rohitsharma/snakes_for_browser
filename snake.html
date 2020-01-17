@@ -1,0 +1,246 @@
+<html>		
+	<head>
+<style>
+.container {
+	width: 500px;
+    height: 500px;
+    border: solid 2px red;   
+}
+.controls {	 
+	left : 200px;   
+position: absolute;	
+}
+.frog {
+	position: absolute;
+	/*animation-name: frog;
+	animation-iteration-count: infinite;
+	animation-duration: 1s;*/
+	font-size: 15px;
+}
+
+@keyframes frog {
+    from {background-color: black;}
+    to {background-color: white;}
+}
+
+.snake {
+	position: absolute;	
+	font-size: 15px;
+}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<script>
+(function() {
+
+	const MIN_X = 10;
+    const MIN_Y = 10;
+    const MAX_X = 490;
+    const MAX_Y = 490;
+
+    let x = 250;
+    let y = 250;	
+	let frog_x = 0;
+	let frog_y = 0;
+	
+	let level = 80;
+	let offset = 6;
+	let step_size = 6
+	
+	let snakeBody = [];
+	let snakeTemplate = null;
+	let snakePosition = [[x,y]];	
+	
+	let min_border_frog_distance = 30;
+
+
+	let clickLeft = false;
+	let clickRight = false;
+	let clickUp = false;
+	let clickBottom = false;
+	
+	function growSnake(){
+		let snakes = document.getElementById('snakes');
+		var span = document.createElement('span');
+		span.innerText = '*';
+		span.className = 'snake';
+		snakes.appendChild(span);
+		snakeBody.push(span);
+	}
+	
+	document.addEventListener('keydown', function(event) {	
+		if(event.keyCode === 38) {
+			direction(false,false,true,false);
+		} else if(event.keyCode === 39) {
+			direction(false,true,false,false);
+		}else if(event.keyCode === 37) {
+			direction(true,false,false,false);
+		}else if(event.keyCode === 40) {
+			direction(false,false,false,true);
+		}		
+	});
+
+    init = function() { 
+		let snakes = document.getElementById('snakes');		
+		growSnake();		
+        frog();				
+    }
+	
+	start = function (){
+		//let selectedLevel = document.getElementById('level').value;		
+		//level = 80 - selectedLevel*10;
+		clickRight = true;
+		right();
+	}
+		
+	direction =  function(_left,_right,_up,_bottom) {
+		if(clickLeft == _left && clickRight == _right && clickUp == _up && clickBottom == _bottom) {
+			return;
+		}
+		clickLeft = _left;
+		clickRight = _right;
+		clickUp = _up;
+		clickBottom = _bottom;
+		
+		if(_left){
+			left();
+		} else if(_right){
+			right();
+		} else if(_up){
+			up();
+		}else if(_bottom){
+			bottom();
+		}
+	}
+	
+	function left() {		
+		if(clickLeft){
+			x-=step_size;
+			if(move())
+				setTimeout(left, level);
+		}
+	}
+
+    function right() {			
+		if(clickRight){
+			x+=step_size;
+			if(move())
+				setTimeout(right, level);
+		}
+	}
+
+    function up() {
+		if(clickUp){
+			y-=step_size;
+			if(move())			
+				setTimeout(up, level);
+		}
+	}
+
+    function bottom() {
+		if(clickBottom){
+			y+=step_size;
+			if(move())
+				setTimeout(bottom, level);
+		}
+	}
+	
+	function _move() {
+		let snake = document.getElementById('snake');
+		
+        snake.style.left = x + 'px';
+        snake.style.top = y + 'px';				
+		return statusCheck();
+	}
+	
+	function move(){
+		
+		for(let i = 1; i < snakePosition.length; i++) {
+			snakePosition[i-1] = snakePosition[i];
+		}
+		
+		snakePosition.pop();
+		snakePosition.push([x,y]);
+		
+		let max = snakeBody.length;
+		for(let i = 0 ;i < snakeBody.length;i++){
+			max--;
+			let snake = snakeBody[i];
+			snake.style.left = snakePosition[max][0]+ 'px';
+			snake.style.top = snakePosition[max][1]+ 'px';			
+		}
+		        	
+		return statusCheck();
+	}
+	
+	function statusCheck() {
+		let x_diff = frog_x - x > 0 ? frog_x - x : x - frog_x;
+		let y_diff = frog_y - y > 0 ? frog_y - y : y - frog_y;
+			
+		if(x_diff <= offset && y_diff <= offset) { //eaten 			
+			frog();
+			//x = x + (frog_x > x ? -offset : offset);
+			//y = y + (frog_y > y ? -offset : offset);
+			growSnake();			
+			snakePosition.push([x,y]);
+			level-=4;
+		} else if(x > MAX_X || x < MIN_X || y > MAX_Y || y < MIN_Y){ // dead
+			alert('game over');
+			return false;			
+		}
+		return true;
+	}
+	
+    function random(min, max) {
+        return Math.floor((Math.random() * max) + min);
+    }
+     
+    function frog() {
+        let frog = document.getElementById('frog');
+		frog_x = random(MIN_X + min_border_frog_distance, MAX_X - min_border_frog_distance);
+		frog_y = random(MIN_Y+ min_border_frog_distance, MAX_Y- min_border_frog_distance);
+        frog.style.left =  frog_x + 'px';
+        frog.style.top = frog_y + 'px';
+	}
+	
+    return {
+		init : init,		
+		direction :direction,
+		start : start
+	}
+}
+)()
+
+</script>
+
+
+	</head>
+	<body onload="init()">
+		<div id="container" class="container">
+		</div>
+		<br>
+		<button type="button" onclick="start();">Start</button>
+		<!--<select id="level">
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3" selected>3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+		  </select>-->
+		<br>
+		<div id="controls" class="controls">
+			&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" class="fa fa-arrow-circle-up" onclick="direction(false,false,true,false);"></button>	<br>	
+			<button type="button" class="fa fa-arrow-circle-left" onclick="direction(true,false,false,false);"></button>
+			<button type="button" class="fa fa-arrow-circle-right" onclick="direction(false,true,false,false);"></button>	<br>		
+			&nbsp;&nbsp;&nbsp;&nbsp;<button type="button" class="fa fa-arrow-circle-down" onclick="direction(false,false,false,true);"></button>
+			<br>
+			<br>
+			<span> Or USE arrow keys</span>
+		</div>
+		<br>
+		
+		<span id="frog" class="frog">*</span>
+		<div id="snakes">		
+		</div>
+	</body>
+</html>
